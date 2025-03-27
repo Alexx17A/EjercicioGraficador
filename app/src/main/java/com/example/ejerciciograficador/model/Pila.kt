@@ -1,7 +1,7 @@
 package com.example.ejerciciograficador.model
 
 /**
- * Implementación genérica de una estructura de datos Pila (LIFO)
+ * implementacion de la estructura de datos tipo Pila (LIFO) last in first out (gracias profe pino)
  * @param T Tipo genérico de elementos que contendrá la pila
  */
 class Pila<T> {
@@ -9,7 +9,7 @@ class Pila<T> {
 
 
     /**
-     * Agrega un elemento a la parte superior de la pila
+     * se agrega un elemento a la parte superior de la pila
      * @param elemento Elemento a agregar
      */
     fun push(elemento: T) {
