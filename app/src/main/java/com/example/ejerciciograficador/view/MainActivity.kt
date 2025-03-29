@@ -18,10 +18,13 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavHost(navController, startDestination = "menu") {
                         composable("menu") { MenuPrincipal(navController) }
-                        composable("graficador") { GraficadorVista() }
+                        composable("graficador") { MenuIngresarExpresion() }
                     }
                 }
             }
         }
+
+
+
     }
 }

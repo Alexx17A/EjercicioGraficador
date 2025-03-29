@@ -1,5 +1,6 @@
 package com.example.ejerciciograficador.view
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,17 +19,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-
 @Composable
 fun MenuPrincipal(navController: NavHostController) {
 
+    val context = LocalContext.current
+
     val integrantes = listOf(
         "pongan aqui su nombre jodido jeje",
-        "pongan aqui su nombre jodido jeje",
+        "Jose Manuel Chable Gomez",
         "Osiel Alejandro Perez Barroso",
         "pongan aqui su nombre jodido jeje",
         "pongan aqui su nombre jodido jeje",
@@ -79,7 +83,10 @@ fun MenuPrincipal(navController: NavHostController) {
 
         // Botón para ir al graficador
         Button(
-            onClick = { navController.navigate("graficador") },
+            // AQUI HICE CAMBIO PARA QUE APUNTE A LA ACTIVIDAD DE INGRESAR EXPRESION - CHABLE
+            onClick = {
+                context.startActivity(Intent(context, MenuIngresarExpresion::class.java))
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),

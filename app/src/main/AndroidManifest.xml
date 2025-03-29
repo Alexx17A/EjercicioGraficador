@@ -23,6 +23,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--aqui agrego  mi vista (CHABLE)-->
+        <activity android:name=".view.MenuIngresarExpresion" />
+
+        <!--  TODO: CAMBIEN ESTO A LA ACTIVIDAD DONDE SE GRAFICARA LA EXPRESION-->
+        <activity
+            android:name=".view.GraphActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
