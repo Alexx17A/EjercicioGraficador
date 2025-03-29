@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.regex.Pattern
+import com.example.ejerciciograficador.controller.GraficadorController
 
 class MenuIngresarExpresion : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,10 +114,13 @@ class GraphActivity : ComponentActivity() {
 
 @Composable
 fun GraphScreen(expression: String) {
+    var func = GraficadorController()
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
         Text(text = "Expresión a graficar: $expression", style = MaterialTheme.typography.headlineMedium)
+        Text(text = "Expresion de infija a posfija: ${func.infijaAPostfija(expression)}", style = MaterialTheme.typography.headlineSmall)
     }
+
 }
