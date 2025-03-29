@@ -34,7 +34,7 @@ fun MenuPrincipal(navController: NavHostController) {
         "pongan aqui su nombre jodido jeje",
         "Jose Manuel Chable Gomez",
         "Osiel Alejandro Perez Barroso",
-        "pongan aqui su nombre jodido jeje",
+        "Fernando Gamaliel Rodriguez Torres",
         "pongan aqui su nombre jodido jeje",
         "pongan aqui su nombre jodido jeje"
     )
