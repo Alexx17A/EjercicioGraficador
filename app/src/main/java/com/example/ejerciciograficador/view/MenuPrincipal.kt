@@ -31,11 +31,11 @@ fun MenuPrincipal(navController: NavHostController) {
     val context = LocalContext.current
 
     val integrantes = listOf(
-        "pongan aqui su nombre jodido jeje",
+        "Jose A Ramirez Sanchez",
         "Jose Manuel Chable Gomez",
         "Osiel Alejandro Perez Barroso",
         "Fernando Gamaliel Rodriguez Torres",
-        "pongan aqui su nombre jodido jeje",
+        "Carla A Salazar Santoyo",
         "pongan aqui su nombre jodido jeje"
     )
 

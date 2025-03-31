@@ -103,4 +103,18 @@ class GraficadorController {
         return puntos
     }
 
+    // ✅ Nueva función para evaluar múltiples puntos y devolver un arreglo bidimensional
+    fun evaluarRango(expresionPostfija: String, rangoInicio: Double, rangoFin: Double, paso: Double): Array<Array<Double>> {
+        val puntos = mutableListOf<Array<Double>>()
+        var x = rangoInicio
+
+        while (x <= rangoFin) {
+            val y = evaluarPostfija(expresionPostfija, x)
+            puntos.add(arrayOf(x, y))
+            x += paso
+        }
+
+        return puntos.toTypedArray()
+    }
+
 }
