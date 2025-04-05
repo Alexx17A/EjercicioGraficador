@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,7 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -33,10 +36,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ejerciciograficador.R
 import com.example.ejerciciograficador.controller.GraficadorController
 import java.util.regex.Pattern
 
@@ -73,6 +79,13 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
 
     val controller = GraficadorController()
 
+    val imageModifier = Modifier
+        .size(150.dp).offset(x = 170.dp, y = -15.dp)
+    Image(
+        painter = painterResource(id = R.drawable.cat),
+        contentDescription = "funny cat",
+        modifier = imageModifier
+    )
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
         Text("Ingresa expresión matemática", fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
 
@@ -142,23 +155,26 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
         // ingresar un intervalo con dos campos numericos
         if (selectedOptionText == "Intervalo") {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("[ ", fontSize = 30.sp)
+                Text("[ ", fontSize = 40.sp)
                 OutlinedTextField(
                     value = primerPunto,
                     onValueChange = { if (it.all { ch -> ch.isDigit() }) primerPunto = it },
                     modifier = Modifier.width(60.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge
                 )
-                Text(", ", fontSize = 20.sp)
+                Text(" , ", fontSize = 30.sp)
                 OutlinedTextField(
                     value = segundoPunto,
                     onValueChange = { if (it.all { ch -> ch.isDigit() }) segundoPunto = it },
                     modifier = Modifier.width(60.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge
+
                 )
-                Text(" ]", fontSize = 30.sp)
+                Text(" ]", fontSize = 40.sp)
             }
         }
 
@@ -255,7 +271,7 @@ fun GraphScreen(
             Text(text = "Evaluar en punto: $punto", style = MaterialTheme.typography.bodyLarge)
         }
 
-        if (primerPunto >= 0 && segundoPunto >= 0) {
+        if (primerPunto != 0.0 && segundoPunto != 0.0) {
             Text(
                 text = "Evaluar en intervalo: [$primerPunto - $segundoPunto]",
                 style = MaterialTheme.typography.bodyLarge
