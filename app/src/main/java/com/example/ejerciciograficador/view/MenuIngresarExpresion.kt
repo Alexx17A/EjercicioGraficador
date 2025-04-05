@@ -61,7 +61,7 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
     var sliderValue by remember { mutableFloatStateOf(0f) }
     var expression by remember { mutableStateOf(TextFieldValue("")) }
     var errorMessage by remember { mutableStateOf("") }
-    val options = listOf("Punto", "Intervalo")  // TODO: MODIFICAR OPCIONES SEGUN LA ACTIVIDAD DESEADA
+    val options = listOf("Punto", "Intervalo")
     var expanded by remember { mutableStateOf(false) }
     var selectedOptionText by remember { mutableStateOf(options[0]) }
     var primerPunto by remember { mutableStateOf("") }
@@ -96,7 +96,6 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
         Spacer(modifier = Modifier.height(8.dp))
 
         // dropdown para elegir entre punto o intervalo
-        // TODO: MODIFICAR EL DROPDOWN PARA MOSTRAR OPCIONES RELEVANTES A TU ACTIVIDAD
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
@@ -197,7 +196,7 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             enabled = errorMessage.isEmpty()
         ) {
-            // TODO: CAMBIAR EL TEXTO DEL BOTON SEGUN TU ACTIVIDAD
+            // TODO: CAMBIAR EL TEXTO DEL BOTON SEGUN TU ACTIVIDAD INTE
             Text("Graficar", fontSize = 18.sp)
         }
     }
