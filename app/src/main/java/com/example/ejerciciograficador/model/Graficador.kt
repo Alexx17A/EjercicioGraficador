@@ -1,4 +1,6 @@
 package com.example.ejerciciograficador.model
 
-class Graficador {
-}
+data class Graficador(
+    val expresion: String,
+    val puntos: List<Pair<Double, Double>>
+)

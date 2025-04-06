@@ -1,4 +1,5 @@
 package com.example.ejerciciograficador.controller
+
 import com.example.ejerciciograficador.model.Pila
 import kotlin.math.pow
 
@@ -90,7 +91,8 @@ class GraficadorController {
 
     //con esta funcion se deben mostrar los puntos en la grafica (que aun no existe)
     fun generarPuntosGrafica(expresionInfija: String, rangoInicio: Double, rangoFin: Double, paso: Double): List<Pair<Double, Double>> {
-        val postfija = infijaAPostfija(expresionInfija)
+        val expresionConMultiplicacion = insertarMultiplicacionImplicita(expresionInfija)
+        val postfija = infijaAPostfija(expresionConMultiplicacion)
         val puntos = mutableListOf<Pair<Double, Double>>()
 
         var x = rangoInicio
@@ -102,6 +104,7 @@ class GraficadorController {
 
         return puntos
     }
+
 
     // ✅ Nueva función para evaluar múltiples puntos y devolver un arreglo bidimensional
     fun evaluarRango(expresionPostfija: String, rangoInicio: Double, rangoFin: Double, paso: Double): Array<Array<Double>> {
@@ -116,5 +119,28 @@ class GraficadorController {
 
         return puntos.toTypedArray()
     }
+
+    fun insertarMultiplicacionImplicita(expresion: String): String {
+        val resultado = StringBuilder()
+
+        for (i in expresion.indices) {
+            val actual = expresion[i]
+            resultado.append(actual)
+
+            if (i < expresion.length - 1) {
+                val siguiente = expresion[i + 1]
+
+                // Casos comunes de multiplicación implícita:
+                if ((actual.isDigit() || actual == 'x' || actual == ')') &&
+                    (siguiente == 'x' || siguiente == '(')
+                ) {
+                    resultado.append('*')
+                }
+            }
+        }
+
+        return resultado.toString()
+    }
+
 
 }

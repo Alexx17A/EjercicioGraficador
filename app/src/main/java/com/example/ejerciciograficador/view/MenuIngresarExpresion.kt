@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,9 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -64,6 +65,7 @@ class MenuIngresarExpresion : ComponentActivity() {
 @Composable
 fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
     // variables para almacenar los datos de la interfaz
+    var puntosGraficar by remember { mutableStateOf<List<Pair<Double, Double>>?>(null) }
     var sliderValue by remember { mutableFloatStateOf(0f) }
     var expression by remember { mutableStateOf(TextFieldValue("")) }
     var errorMessage by remember { mutableStateOf("") }
@@ -79,14 +81,13 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
 
     val controller = GraficadorController()
 
-    val imageModifier = Modifier
-        .size(150.dp).offset(x = 170.dp, y = -15.dp)
-    Image(
-        painter = painterResource(id = R.drawable.cat),
-        contentDescription = "funny cat",
-        modifier = imageModifier
-    )
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center)
+    {
+
+        if (puntosGraficar != null) {
+            GraficadorCanvas(puntos = puntosGraficar!!, expresion = expression.text)
+        }
+
         Text("Ingresa expresión matemática", fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
 
         // campo para ingresar la expresion matematica con validacion
@@ -185,26 +186,34 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
             onClick = {
                 if (expressionPattern.matcher(expression.text).matches()) {
                     val infija = expression.text
-                    // se convierte la expresion infija a postfija usando el controlador
-                    val postfija = controller.infijaAPostfija(infija)
-
-                    // se prepara el intent con los datos
-                    val intent = Intent(context, GraphActivity::class.java).apply {
-                        putExtra("infija", infija)
-                        putExtra("postfija", postfija)
-
-                        // se agregan extras diferentes segun la opcion elegida
-                        if (selectedOptionText == "Punto") {
-                            putExtra("punto", sliderValue)
-                        } else if (selectedOptionText == "Intervalo") {
+                    val puntos = when (selectedOptionText) {
+                        "Punto" -> {
+                            // MODIFICAR ESTA PARTE
+                            val puntoCentral = sliderValue.toDouble()
+                            // Definir un rango alrededor del punto central (por ejemplo, ±5 unidades)
+                            val rango = 5.0
+                            controller.generarPuntosGrafica(
+                                infija,
+                                puntoCentral - rango,  // inicio del intervalo
+                                puntoCentral + rango,  // fin del intervalo
+                                0.1                   // paso
+                            )
+                        }
+                        "Intervalo" -> {
                             val inicio = primerPunto.toDoubleOrNull() ?: 0.0
                             val fin = segundoPunto.toDoubleOrNull() ?: 0.0
-                            putExtra("primerPunto", inicio)
-                            putExtra("segundoPunto", fin)
+                            controller.generarPuntosGrafica(
+                                infija,
+                                inicio,
+                                fin,
+                                0.1
+                            )
                         }
+                        else -> emptyList()
                     }
 
-                    onGraphClick(intent)
+                    // Guarda los puntos en el estado para mostrarlos en pantalla
+                    puntosGraficar = puntos
                 } else {
                     errorMessage = "Expresión no válida"
                 }
@@ -212,9 +221,9 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             enabled = errorMessage.isEmpty()
         ) {
-            // TODO: CAMBIAR EL TEXTO DEL BOTON SEGUN TU ACTIVIDAD INTE
             Text("Graficar", fontSize = 18.sp)
         }
+
     }
 }
 
@@ -279,3 +288,39 @@ fun GraphScreen(
         }
     }
 }
+
+@Composable
+fun GraficadorCanvas(puntos: List<Pair<Double, Double>>, expresion: String) {
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+        Text(text = "Gráfica de: $expresion")
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Canvas(modifier = Modifier
+            .fillMaxWidth()
+            .height(300.dp)) {
+
+            val ancho = size.width
+            val alto = size.height
+
+            val escalaX = ancho / 20f
+            val escalaY = alto / 20f
+
+            drawLine(Color.Gray, start = center.copy(x = 0f), end = center.copy(x = ancho), strokeWidth = 2f)
+            drawLine(Color.Gray, start = center.copy(y = 0f), end = center.copy(y = alto), strokeWidth = 2f)
+
+            puntos.forEachIndexed { index, (x, y) ->
+                if (index > 0) {
+                    val (x1, y1) = puntos[index - 1]
+                    drawLine(
+                        color = Color.Red,
+                        start = center + androidx.compose.ui.geometry.Offset((x1 * escalaX).toFloat(), -(y1 * escalaY).toFloat()),
+                        end = center + androidx.compose.ui.geometry.Offset((x * escalaX).toFloat(), -(y * escalaY).toFloat()),
+                        strokeWidth = 2f
+                    )
+                }
+            }
+        }
+    }
+}
+
+
