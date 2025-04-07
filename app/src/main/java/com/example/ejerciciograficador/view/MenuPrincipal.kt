@@ -36,7 +36,7 @@ fun MenuPrincipal(navController: NavHostController) {
         "Osiel Alejandro Perez Barroso",
         "Fernando Gamaliel Rodriguez Torres",
         "Carla A Salazar Santoyo",
-        "pongan aqui su nombre jodido jeje"
+        "Jose Alejandro Interian Pech"
     )
 
     Column(
