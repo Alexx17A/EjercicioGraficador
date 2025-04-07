@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -48,11 +49,7 @@ class MenuIngresarExpresion : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MathExpressionScreen { intent ->
-                // TODO: REEMPLZAR POR LA ACTIVIDAD QUE QUIERAS ABRIR DESPUES DE INGRESAR LA EXPRESION
-                intent.setClass(this, GraphActivity::class.java)
-                startActivity(intent)
-            }
+            MathExpressionScreen()
         }
     }
 }
@@ -60,7 +57,7 @@ class MenuIngresarExpresion : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
+fun MathExpressionScreen() {
     // variables para almacenar los datos de la interfaz
     var puntosGraficar by remember { mutableStateOf<List<Pair<Double, Double>>?>(null) }
     var sliderValue by remember { mutableFloatStateOf(0f) }
@@ -77,7 +74,11 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
 
     val controller = GraficadorController()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center)
+    Column(
+        modifier = Modifier.fillMaxSize().
+        padding(16.dp).
+        verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center)
     {
 
         if (puntosGraficar != null) {
@@ -192,34 +193,33 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
                     when (selectedOptionText) {
                         "Punto" -> {
                             val puntoCentral = sliderValue.toDouble()
-                            val rango = 5.0
-                            val puntos = controller.generarPuntosGrafica(
-                                infija,
-                                puntoCentral - rango,
-                                puntoCentral + rango,
-                                0.1
-                            )
-                            puntosGraficar = puntos
+                            // usar multiplicacion implicita nos dejar ingresar la expresion de la sig. manera 2x -> 2*x
+                            val infijaConMultiplicacion = controller.insertarMultiplicacionImplicita(infija)
+                            val postfija1 = controller.infijaAPostfija(infijaConMultiplicacion)
+                            val y = controller.evaluarPostfija(postfija1, puntoCentral)
+                            puntosGraficar = listOf(Pair(puntoCentral, y))
                             intent.putExtra("punto", sliderValue)
                         }
+
 
                         "Intervalo" -> {
                             val inicio = primerPunto.toDoubleOrNull() ?: 0.0
                             val fin = segundoPunto.toDoubleOrNull() ?: 0.0
+
+                            if (inicio >= fin) {
+                                errorMessage = "El intervalo debe ser válido (inicio < fin)"
+                                return@Button
+                            }
+
                             val puntos = controller.generarPuntosGrafica(
-                                infija,
+                                expression.text,
                                 inicio,
                                 fin,
                                 0.1
                             )
                             puntosGraficar = puntos
-                            intent.putExtra("primerPunto", inicio)
-                            intent.putExtra("segundoPunto", fin)
                         }
                     }
-
-                    // ¡IMPORTANTE! Llama a la función que cambia de pantalla
-                    onGraphClick(intent)
                 } else {
                     errorMessage = "Expresión no válida"
                 }
@@ -233,69 +233,6 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
 
     }
 }
-
-
-
-// Actividad placeholder para mostrar la expresion procesada
-// TODO: IMPLEMENTAR TU PROPIA ACTIVIDAD DE GRAFICACION O PROCESAMIENTO DE EXPRESIONES
-// CUANDO HAGAS TU ACTIVIDAD, PUEDES IGNORAR ESTO POR COMPLETO Y
-// ASEGURARTE QUE EN LA LINEA DE ARRIBA (intent.setClass) APUNTES A TU ACTIVIDAD
-class GraphActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // recuperar los datos del intent
-        val infija = intent.getStringExtra("infija") ?: ""
-        val postfija = intent.getStringExtra("postfija") ?: ""
-        val punto = intent.getFloatExtra("punto", -1f)
-        val primerPunto = intent.getDoubleExtra("primerPunto", 0.0)
-        val segundoPunto = intent.getDoubleExtra("segundoPunto", 0.0)
-
-        setContent {
-            GraphScreen(
-                infija = infija,
-                postfija = postfija,
-                punto = punto,
-                primerPunto = primerPunto,
-                segundoPunto = segundoPunto
-            )
-        }
-    }
-}
-
-// pantalla simple que muestra los datos recibidos
-// ESTO SOLO ES UN EJEMPLO DE COMO PUEDES LLAMAR LAS VARIABLES MANDADAS DESDE LA VISTA DE INGRESAR EXPRESIONES
-// TODO: REEMPLAZAR ESTA PANTALLA CON TU IMPLEMENTACION DE GRAFICO U OTRA FUNCIONALIDAD
-@Composable
-fun GraphScreen(
-    infija: String,
-    postfija: String,
-    punto: Float,
-    primerPunto: Double,
-    segundoPunto: Double
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = "Expresión infija: $infija", style = MaterialTheme.typography.headlineMedium)
-        Text(text = "Expresión postfija: $postfija", style = MaterialTheme.typography.headlineSmall)
-
-        if (punto >= 0) {
-            Text(text = "Evaluar en punto: $punto", style = MaterialTheme.typography.bodyLarge)
-        }
-
-        if (primerPunto != 0.0 && segundoPunto != 0.0) {
-            Text(
-                text = "Evaluar en intervalo: [$primerPunto - $segundoPunto]",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
-}
-
 @Composable
 fun GraficadorCanvas(puntos: List<Pair<Double, Double>>, expresion: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
@@ -309,14 +246,23 @@ fun GraficadorCanvas(puntos: List<Pair<Double, Double>>, expresion: String) {
             val ancho = size.width
             val alto = size.height
 
-            // Calcular los límites de los puntos
-            val minX = puntos.minOfOrNull { it.first } ?: 0.0
-            val maxX = puntos.maxOfOrNull { it.first } ?: 1.0
-            val minY = puntos.minOfOrNull { it.second } ?: 0.0
-            val maxY = puntos.maxOfOrNull { it.second } ?: 1.0
+            var minX = puntos.minOfOrNull { it.first } ?: 0.0
+            var maxX = puntos.maxOfOrNull { it.first } ?: 1.0
+            var minY = puntos.minOfOrNull { it.second } ?: 0.0
+            var maxY = puntos.maxOfOrNull { it.second } ?: 1.0
 
-            val escalaX = ancho / (maxX - minX).toFloat()
-            val escalaY = alto / (maxY - minY).toFloat()
+            // expandir el rango si solo hay un punto
+            if (minX == maxX) {
+                minX -= 1
+                maxX += 1
+            }
+            if (minY == maxY) {
+                minY -= 1
+                maxY += 1
+            }
+
+            val escalaX = if ((maxX - minX) != 0.0) ancho / (maxX - minX).toFloat() else 1f
+            val escalaY = if ((maxY - minY) != 0.0) alto / (maxY - minY).toFloat() else 1f
 
             fun transformar(x: Double, y: Double): Offset {
                 val px = ((x - minX) * escalaX)
@@ -324,21 +270,20 @@ fun GraficadorCanvas(puntos: List<Pair<Double, Double>>, expresion: String) {
                 return Offset(px.toFloat(), py.toFloat())
             }
 
-            drawLine(Color.Gray, start = Offset(0f, alto / 2), end = Offset(ancho, alto / 2), strokeWidth = 2f)
-            drawLine(Color.Gray, start = Offset(ancho / 2, 0f), end = Offset(ancho / 2, alto), strokeWidth = 2f)
+            // ejes
+            val ejeX = if (minY <= 0.0 && maxY >= 0.0) transformar(minX, 0.0).y else alto
+            val ejeY = if (minX <= 0.0 && maxX >= 0.0) transformar(0.0, minY).x else 0f
 
+            drawLine(Color.Gray, start = Offset(0f, ejeX), end = Offset(ancho, ejeX), strokeWidth = 2f)
+            drawLine(Color.Gray, start = Offset(ejeY, 0f), end = Offset(ejeY, alto), strokeWidth = 2f)
+
+
+            // etiquetas x
             for (i in minX.toInt()..maxX.toInt()) {
                 val x = transformar(i.toDouble(), 0.0).x
-                drawLine(
-                    Color.LightGray,
-                    start = Offset(x, alto / 2 - 5),
-                    end = Offset(x, alto / 2 + 5),
-                    strokeWidth = 1f
-                )
+                drawLine(Color.LightGray, Offset(x, ejeX - 5), Offset(x, ejeX + 5), strokeWidth = 1f)
                 drawContext.canvas.nativeCanvas.drawText(
-                    "$i",
-                    x,
-                    alto / 2 + 20,
+                    "$i", x, ejeX + 20,
                     android.graphics.Paint().apply {
                         textSize = 24f
                         color = android.graphics.Color.BLACK
@@ -347,19 +292,12 @@ fun GraficadorCanvas(puntos: List<Pair<Double, Double>>, expresion: String) {
                 )
             }
 
-            // Dibujar etiquetas en eje Y
+            // etiquetas y
             for (i in minY.toInt()..maxY.toInt()) {
                 val y = transformar(0.0, i.toDouble()).y
-                drawLine(
-                    Color.LightGray,
-                    start = Offset(ancho / 2 - 5, y),
-                    end = Offset(ancho / 2 + 5, y),
-                    strokeWidth = 1f
-                )
+                drawLine(Color.LightGray, Offset(ejeY - 5, y), Offset(ejeY + 5, y), strokeWidth = 1f)
                 drawContext.canvas.nativeCanvas.drawText(
-                    "$i",
-                    ancho / 2 - 30,
-                    y + 10, // ajusta verticalmente
+                    "$i", ejeY - 10, y + 10,
                     android.graphics.Paint().apply {
                         textSize = 24f
                         color = android.graphics.Color.BLACK
@@ -368,16 +306,23 @@ fun GraficadorCanvas(puntos: List<Pair<Double, Double>>, expresion: String) {
                 )
             }
 
-            puntos.zipWithNext { (x1, y1), (x2, y2) ->
-                drawLine(
+            if (puntos.size == 1) {
+                val (x, y) = puntos[0]
+                drawCircle(
                     color = Color.Red,
-                    start = transformar(x1, y1),
-                    end = transformar(x2, y2),
-                    strokeWidth = 2f
+                    radius = 8f,
+                    center = transformar(x, y)
                 )
+            } else {
+                puntos.zipWithNext { (x1, y1), (x2, y2) ->
+                    drawLine(
+                        color = Color.Red,
+                        start = transformar(x1, y1),
+                        end = transformar(x2, y2),
+                        strokeWidth = 2f
+                    )
+                }
             }
         }
     }
 }
-
-

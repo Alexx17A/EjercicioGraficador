@@ -95,7 +95,7 @@ class GraficadorController {
         return pila.pop() ?: 0.0 // Devolvemos el resultado final
     }
 
-    //con esta funcion se deben mostrar los puntos en la grafica (que aun no existe)
+    //con esta funcion se deben mostrar los puntos en la grafica
     fun generarPuntosGrafica(expresionInfija: String, rangoInicio: Double, rangoFin: Double, paso: Double): List<Pair<Double, Double>> {
         val expresionConMultiplicacion = insertarMultiplicacionImplicita(expresionInfija)
         val postfija = infijaAPostfija(expresionConMultiplicacion)
@@ -111,7 +111,7 @@ class GraficadorController {
         return puntos
     }
 
-    // Esta función se asegura de que pongamos los asteriscos donde faltan, por ejemplo "2x" -> "2*x"
+    //esta funcion se asegura de que pongamos los asteriscos donde faltan, por ejemplo "2x" -> "2*x"
     fun insertarMultiplicacionImplicita(expresion: String): String {
         val resultado = StringBuilder()
 
