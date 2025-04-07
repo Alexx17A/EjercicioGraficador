@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,9 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -36,14 +33,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ejerciciograficador.R
 import com.example.ejerciciograficador.controller.GraficadorController
 import java.util.regex.Pattern
 
@@ -74,7 +71,6 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
     var selectedOptionText by remember { mutableStateOf(options[0]) }
     var primerPunto by remember { mutableStateOf("") }
     var segundoPunto by remember { mutableStateOf("") }
-    val context = LocalContext.current
 
     // patron para validar que la expresion solo contenga caracteres permitidos
     val expressionPattern = Pattern.compile("^[0-9x+\\-*/^() ]+\$")
@@ -186,34 +182,44 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
             onClick = {
                 if (expressionPattern.matcher(expression.text).matches()) {
                     val infija = expression.text
-                    val puntos = when (selectedOptionText) {
+                    val postfija = controller.infijaAPostfija(expression.text)
+
+
+                    val intent = Intent()
+                    intent.putExtra("infija", infija)
+                    intent.putExtra("postfija", postfija)
+
+                    when (selectedOptionText) {
                         "Punto" -> {
-                            // MODIFICAR ESTA PARTE
                             val puntoCentral = sliderValue.toDouble()
-                            // Definir un rango alrededor del punto central (por ejemplo, ±5 unidades)
                             val rango = 5.0
-                            controller.generarPuntosGrafica(
+                            val puntos = controller.generarPuntosGrafica(
                                 infija,
-                                puntoCentral - rango,  // inicio del intervalo
-                                puntoCentral + rango,  // fin del intervalo
-                                0.1                   // paso
+                                puntoCentral - rango,
+                                puntoCentral + rango,
+                                0.1
                             )
+                            puntosGraficar = puntos
+                            intent.putExtra("punto", sliderValue)
                         }
+
                         "Intervalo" -> {
                             val inicio = primerPunto.toDoubleOrNull() ?: 0.0
                             val fin = segundoPunto.toDoubleOrNull() ?: 0.0
-                            controller.generarPuntosGrafica(
+                            val puntos = controller.generarPuntosGrafica(
                                 infija,
                                 inicio,
                                 fin,
                                 0.1
                             )
+                            puntosGraficar = puntos
+                            intent.putExtra("primerPunto", inicio)
+                            intent.putExtra("segundoPunto", fin)
                         }
-                        else -> emptyList()
                     }
 
-                    // Guarda los puntos en el estado para mostrarlos en pantalla
-                    puntosGraficar = puntos
+                    // ¡IMPORTANTE! Llama a la función que cambia de pantalla
+                    onGraphClick(intent)
                 } else {
                     errorMessage = "Expresión no válida"
                 }
@@ -223,6 +229,7 @@ fun MathExpressionScreen(onGraphClick: (Intent) -> Unit) {
         ) {
             Text("Graficar", fontSize = 18.sp)
         }
+
 
     }
 }
@@ -302,22 +309,72 @@ fun GraficadorCanvas(puntos: List<Pair<Double, Double>>, expresion: String) {
             val ancho = size.width
             val alto = size.height
 
-            val escalaX = ancho / 20f
-            val escalaY = alto / 20f
+            // Calcular los límites de los puntos
+            val minX = puntos.minOfOrNull { it.first } ?: 0.0
+            val maxX = puntos.maxOfOrNull { it.first } ?: 1.0
+            val minY = puntos.minOfOrNull { it.second } ?: 0.0
+            val maxY = puntos.maxOfOrNull { it.second } ?: 1.0
 
-            drawLine(Color.Gray, start = center.copy(x = 0f), end = center.copy(x = ancho), strokeWidth = 2f)
-            drawLine(Color.Gray, start = center.copy(y = 0f), end = center.copy(y = alto), strokeWidth = 2f)
+            val escalaX = ancho / (maxX - minX).toFloat()
+            val escalaY = alto / (maxY - minY).toFloat()
 
-            puntos.forEachIndexed { index, (x, y) ->
-                if (index > 0) {
-                    val (x1, y1) = puntos[index - 1]
-                    drawLine(
-                        color = Color.Red,
-                        start = center + androidx.compose.ui.geometry.Offset((x1 * escalaX).toFloat(), -(y1 * escalaY).toFloat()),
-                        end = center + androidx.compose.ui.geometry.Offset((x * escalaX).toFloat(), -(y * escalaY).toFloat()),
-                        strokeWidth = 2f
-                    )
-                }
+            fun transformar(x: Double, y: Double): Offset {
+                val px = ((x - minX) * escalaX)
+                val py = alto - ((y - minY) * escalaY)
+                return Offset(px.toFloat(), py.toFloat())
+            }
+
+            drawLine(Color.Gray, start = Offset(0f, alto / 2), end = Offset(ancho, alto / 2), strokeWidth = 2f)
+            drawLine(Color.Gray, start = Offset(ancho / 2, 0f), end = Offset(ancho / 2, alto), strokeWidth = 2f)
+
+            for (i in minX.toInt()..maxX.toInt()) {
+                val x = transformar(i.toDouble(), 0.0).x
+                drawLine(
+                    Color.LightGray,
+                    start = Offset(x, alto / 2 - 5),
+                    end = Offset(x, alto / 2 + 5),
+                    strokeWidth = 1f
+                )
+                drawContext.canvas.nativeCanvas.drawText(
+                    "$i",
+                    x,
+                    alto / 2 + 20,
+                    android.graphics.Paint().apply {
+                        textSize = 24f
+                        color = android.graphics.Color.BLACK
+                        textAlign = android.graphics.Paint.Align.CENTER
+                    }
+                )
+            }
+
+            // Dibujar etiquetas en eje Y
+            for (i in minY.toInt()..maxY.toInt()) {
+                val y = transformar(0.0, i.toDouble()).y
+                drawLine(
+                    Color.LightGray,
+                    start = Offset(ancho / 2 - 5, y),
+                    end = Offset(ancho / 2 + 5, y),
+                    strokeWidth = 1f
+                )
+                drawContext.canvas.nativeCanvas.drawText(
+                    "$i",
+                    ancho / 2 - 30,
+                    y + 10, // ajusta verticalmente
+                    android.graphics.Paint().apply {
+                        textSize = 24f
+                        color = android.graphics.Color.BLACK
+                        textAlign = android.graphics.Paint.Align.RIGHT
+                    }
+                )
+            }
+
+            puntos.zipWithNext { (x1, y1), (x2, y2) ->
+                drawLine(
+                    color = Color.Red,
+                    start = transformar(x1, y1),
+                    end = transformar(x2, y2),
+                    strokeWidth = 2f
+                )
             }
         }
     }
